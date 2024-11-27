@@ -1,0 +1,51 @@
+name: Code Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  code-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # リポジトリをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # PHPコードチェック
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1' # 必要なPHPバージョンを指定
+          tools: composer
+      - name: Install PHP dependencies
+        run: composer install
+      - name: Get Changed PHP Files
+        id: changed-php
+        run: |
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.php$' || echo ""
+      - name: Run PHPCS
+        if: steps.changed-php.outputs.files != ''
+        run: |
+          echo "${{ steps.changed-php.outputs.files }}" | xargs ./vendor/bin/phpcs --standard=PSR12
+
+      # JavaScriptコードチェック
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # 必要なNode.jsバージョンを指定
+      - name: Install Node.js dependencies
+        run: npm install
+      - name: Get Changed JS Files
+        id: changed-js
+        run: |
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.js$' || echo ""
+      - name: Run ESLint
+        if: steps.changed-js.outputs.files != ''
+        run: |
+          echo "${{ steps.changed-js.outputs.files }}" | xargs npx eslint
