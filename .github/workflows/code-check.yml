@@ -1,12 +1,8 @@
 name: Code Check
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  pull_request: # 全てのブランチを対象にする
+  push: # プッシュ時もトリガー
 
 jobs:
   code-check:
