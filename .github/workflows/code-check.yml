@@ -39,13 +39,14 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-progress --no-suggest
 
-      # Composerキャッシュを保存
+      # Composerキャッシュ
       - name: Cache Composer dependencies
         uses: actions/cache@v3
         with:
           path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}-${{ format('yyyy-MM', now()) }}
           restore-keys: |
+            ${{ runner.os }}-composer-${{ format('yyyy-MM', now()) }}
             ${{ runner.os }}-composer-
 
       # 変更されたPHPファイルを取得
@@ -74,18 +75,14 @@ jobs:
         # Node.js環境をセットアップして、npm（Node.jsパッケージ管理ツール）を利用可能にする
 
       # npm キャッシュ
-      - name: Install Node.js dependencies
-        run: npm ci
-
       - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}-${{ format('yyyy-MM', now()) }}
           restore-keys: |
+            ${{ runner.os }}-node-${{ format('yyyy-MM', now()) }}
             ${{ runner.os }}-node-
-            ${{ runner.os }}-
-            node-
 
       # JavaScript依存関係をインストール
       - name: Install Node.js dependencies
