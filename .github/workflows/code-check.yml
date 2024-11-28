@@ -19,7 +19,14 @@ jobs:
         # デフォルトでは浅いクローン（最新1つの履歴のみ）を行うため、
         # 差分を正確に取得するために完全な履歴をフェッチする
 
-      # PHPコードチェック用の環境セットアップ
+      # Composer キャッシュ
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -50,6 +57,14 @@ jobs:
         # phpcs（PHPコードスニファー）を使用して、コードがPSR12標準に準拠しているかを確認
         # エラーがあっても処理を続行
 
+      # npm キャッシュ
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       # Node.js環境をセットアップ
       - name: Set up Node.js
         uses: actions/setup-node@v3
