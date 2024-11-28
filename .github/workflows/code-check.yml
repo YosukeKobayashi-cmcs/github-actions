@@ -2,8 +2,6 @@ name: Code Check
 
 on:
   push:
-    branches:
-      - main
   pull_request:
 
 jobs:
@@ -14,6 +12,10 @@ jobs:
       # リポジトリをチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      # 履歴を完全に取得
+      - name: Fetch git history
+        run: git fetch --unshallow
 
       # PHPコードチェック
       - name: Set up PHP
@@ -26,8 +28,8 @@ jobs:
       - name: Get Changed PHP Files
         id: changed-php
         run: |
-          git fetch --depth=2 origin
-          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.php$' || echo "")
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.php$' || echo ""
+          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.php$' || echo "")
           echo "files=$RESULT" >> $GITHUB_ENV
       - name: Run PHPCS
         if: env.files != ''
@@ -44,8 +46,8 @@ jobs:
       - name: Get Changed JS Files
         id: changed-js
         run: |
-          git fetch --depth=2 origin
-          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.js$' || echo "")
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.js$' || echo ""
+          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.js$' || echo "")
           echo "files=$RESULT" >> $GITHUB_ENV
       - name: Run ESLint
         if: env.files != ''
