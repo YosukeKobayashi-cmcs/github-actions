@@ -1,8 +1,7 @@
 name: Code Check
 
 on:
-  pull_request: # 全てのブランチを対象にする
-  push: # プッシュ時もトリガー
+  pull_request:  # プルリクエスト作成・更新時にワークフローをトリガー
 
 jobs:
   code-check:
@@ -13,35 +12,109 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # PHPコードチェック
+      # Gitの完全な履歴を取得
+      - name: Fetch git history
+        run: git fetch --unshallow
+        # デフォルトでは浅いクローン（最新1つの履歴のみ）を行うため、
+        # 差分を正確に取得するために完全な履歴をフェッチする
+
+      # Composer キャッシュ
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1' # 必要なPHPバージョンを指定
-          tools: composer
+          php-version: '8.1' # PHPバージョンを指定
+          tools: composer    # composerをインストール
+        # PHP環境をセットアップして、Composer（PHPパッケージ管理ツール）を利用可能にする
+
+      # PHP依存関係をインストール
       - name: Install PHP dependencies
         run: composer install
+        # プロジェクトの依存関係（phpcsなど）をインストール
+
+      # 変更されたPHPファイルを取得
       - name: Get Changed PHP Files
         id: changed-php
         run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.php$' || echo ""
-      - name: Run PHPCS
-        if: steps.changed-php.outputs.files != ''
-        run: |
-          echo "${{ steps.changed-php.outputs.files }}" | xargs ./vendor/bin/phpcs --standard=PSR12
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.php$' || echo ""
+          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.php$' || echo "")
+          echo "files=$RESULT" >> $GITHUB_ENV
+        # 現在の変更に含まれるPHPファイルのリストを取得し、環境変数に保存
 
-      # JavaScriptコードチェック
+      # PHPコードをPSR12標準に基づいてチェック
+      - name: Run PHPCS
+        if: env.files != ''
+        continue-on-error: true
+        run: |
+          echo "$files" | tr '\n' ' ' | xargs ./vendor/bin/phpcs --standard=PSR12 > phpcs.log || true
+        # phpcs（PHPコードスニファー）を使用して、コードがPSR12標準に準拠しているかを確認
+        # エラーがあっても処理を続行
+
+      # npm キャッシュ
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      # Node.js環境をセットアップ
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # 必要なNode.jsバージョンを指定
+          node-version: '18' # Node.jsのバージョンを指定
+        # Node.js環境をセットアップして、npm（Node.jsパッケージ管理ツール）を利用可能にする
+
+      # JavaScript依存関係をインストール
       - name: Install Node.js dependencies
         run: npm install
+        # プロジェクトの依存関係（eslintなど）をインストール
+
+      # 変更されたJavaScriptファイルを取得
       - name: Get Changed JS Files
         id: changed-js
         run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.js$' || echo ""
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.js$' || echo ""
+          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.js$' || echo "")
+          echo "files=$RESULT" >> $GITHUB_ENV
+        # 現在の変更に含まれるJavaScriptファイルのリストを取得し、環境変数に保存
+
+      # JavaScriptコードをESLintでチェック
       - name: Run ESLint
-        if: steps.changed-js.outputs.files != ''
+        if: env.files != ''
+        continue-on-error: true
         run: |
-          echo "${{ steps.changed-js.outputs.files }}" | xargs npx eslint
+          echo "$files" | tr '\n' ' ' | xargs npx eslint > eslint.log || true
+        # ESLintを使用してJavaScriptコードのスタイルやエラーをチェック
+        # エラーがあっても処理を続行
+
+      # PHPとJavaScriptのエラーをまとめて表示
+      - name: Display all errors
+        run: |
+          echo "PHPCS Errors:"
+          if [ -f phpcs.log ]; then
+            cat phpcs.log
+            ERROR=1
+          else
+            echo "No PHPCS errors"
+          fi
+          
+          echo ""
+          echo "ESLint Errors:"
+          if [ -f eslint.log ]; then
+            cat eslint.log
+            ERROR=1
+          else
+            echo "No ESLint errors"
+          fi
+          
+          # エラーが存在する場合、終了コードを1に設定
+          if [ "$ERROR" = "1" ]; then
+            exit 1
+          fi
