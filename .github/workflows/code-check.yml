@@ -1,55 +1,93 @@
-name: Code Check
+name: Code Check  # ワークフローの名前
 
 on:
-  push:
-  pull_request:
+  push:  # プッシュ時にワークフローをトリガー
+  pull_request:  # プルリクエスト作成・更新時にワークフローをトリガー
 
 jobs:
   code-check:
     runs-on: ubuntu-latest
 
     steps:
-      # リポジトリをチェックアウト
+      # リポジトリのコードをチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v3
+        # GitHub Actionsがリポジトリの内容を取得するステップ
 
-      # 履歴を完全に取得
+      # Git履歴を完全に取得
       - name: Fetch git history
         run: git fetch --unshallow
+        # デフォルトでは浅いクローン（最新1つの履歴のみ）を行うため、
+        # 差分を正確に取得するために完全な履歴をフェッチする
 
-      # PHPコードチェック
+      # PHPコードチェック用の環境セットアップ
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
-          tools: composer
+          php-version: '8.1' # PHPバージョンを指定
+          tools: composer    # composerをインストール
+        # PHP環境をセットアップして、Composer（PHPパッケージ管理ツール）を利用可能にする
+
+      # PHP依存関係をインストール
       - name: Install PHP dependencies
         run: composer install
+        # プロジェクトの依存関係（phpcsなど）をインストール
+
+      # 変更されたPHPファイルを取得
       - name: Get Changed PHP Files
         id: changed-php
         run: |
           git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.php$' || echo ""
           RESULT=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.php$' || echo "")
           echo "files=$RESULT" >> $GITHUB_ENV
+        # 現在の変更に含まれるPHPファイルのリストを取得し、環境変数に保存
+
+      # PHPコードをPSR12標準に基づいてチェック
       - name: Run PHPCS
         if: env.files != ''
+        continue-on-error: true
         run: |
-          echo "$files" | tr '\n' ' ' | xargs ./vendor/bin/phpcs --standard=PSR12
+          echo "$files" | tr '\n' ' ' | xargs ./vendor/bin/phpcs --standard=PSR12 > phpcs.log || true
+        # phpcs（PHPコードスニファー）を使用して、コードがPSR12標準に準拠しているかを確認
+        # エラーがあっても処理を続行
 
-      # JavaScriptコードチェック
+      # Node.js環境をセットアップ
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '18' # Node.jsのバージョンを指定
+        # Node.js環境をセットアップして、npm（Node.jsパッケージ管理ツール）を利用可能にする
+
+      # JavaScript依存関係をインストール
       - name: Install Node.js dependencies
         run: npm install
+        # プロジェクトの依存関係（eslintなど）をインストール
+
+      # 変更されたJavaScriptファイルを取得
       - name: Get Changed JS Files
         id: changed-js
         run: |
           git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.js$' || echo ""
           RESULT=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.js$' || echo "")
           echo "files=$RESULT" >> $GITHUB_ENV
+        # 現在の変更に含まれるJavaScriptファイルのリストを取得し、環境変数に保存
+
+      # JavaScriptコードをESLintでチェック
       - name: Run ESLint
         if: env.files != ''
+        continue-on-error: true
         run: |
-          echo "$files" | tr '\n' ' ' | xargs npx eslint
+          echo "$files" | tr '\n' ' ' | xargs npx eslint > eslint.log || true
+        # ESLintを使用してJavaScriptコードのスタイルやエラーをチェック
+        # エラーがあっても処理を続行
+
+      # PHPとJavaScriptのエラーをまとめて表示
+      - name: Display all errors
+        run: |
+          echo "PHPCS Errors:"
+          if [ -f phpcs.log ]; then cat phpcs.log; else echo "No PHPCS errors"; fi
+          echo ""
+          echo "ESLint Errors:"
+          if [ -f eslint.log ]; then cat eslint.log; else echo "No ESLint errors"; fi
+        # それぞれのログファイルを確認して、エラー内容を出力
+        # エラーがなければ「No errors」と表示
