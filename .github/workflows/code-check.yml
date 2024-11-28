@@ -26,6 +26,8 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
+
+      # PHP環境のセットアップ
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -33,10 +35,18 @@ jobs:
           tools: composer    # composerをインストール
         # PHP環境をセットアップして、Composer（PHPパッケージ管理ツール）を利用可能にする
 
-      # PHP依存関係をインストール
+      # Composer依存関係をインストール
       - name: Install PHP dependencies
-        run: composer install
-        # プロジェクトの依存関係（phpcsなど）をインストール
+        run: composer install --no-progress --no-suggest
+
+      # Composerキャッシュを保存
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       # 変更されたPHPファイルを取得
       - name: Get Changed PHP Files
@@ -56,7 +66,17 @@ jobs:
         # phpcs（PHPコードスニファー）を使用して、コードがPSR12標準に準拠しているかを確認
         # エラーがあっても処理を続行
 
+      # Node.js環境をセットアップ
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Node.jsのバージョンを指定
+        # Node.js環境をセットアップして、npm（Node.jsパッケージ管理ツール）を利用可能にする
+
       # npm キャッシュ
+      - name: Install Node.js dependencies
+        run: npm ci
+
       - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
@@ -64,12 +84,8 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      # Node.js環境をセットアップ
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18' # Node.jsのバージョンを指定
-        # Node.js環境をセットアップして、npm（Node.jsパッケージ管理ツール）を利用可能にする
+            ${{ runner.os }}-
+            node-
 
       # JavaScript依存関係をインストール
       - name: Install Node.js dependencies
