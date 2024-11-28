@@ -22,16 +22,6 @@ jobs:
       - name: Set cache month
         run: echo "CACHE_MONTH=$(date +'%Y-%m')" >> $GITHUB_ENV
 
-      # Composer キャッシュ
-      - name: Cache Composer dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}-${{ env.CACHE_MONTH }}
-          restore-keys: |
-            ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
-            ${{ runner.os }}-composer-
-
       # PHP環境のセットアップ
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
