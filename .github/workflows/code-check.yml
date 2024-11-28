@@ -1,4 +1,4 @@
-name: Code Check  # ワークフローの名前
+name: Code Check
 
 on:
   push:  # プッシュ時にワークフローをトリガー
@@ -9,12 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # リポジトリのコードをチェックアウト
+      # リポジトリをチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v3
-        # GitHub Actionsがリポジトリの内容を取得するステップ
 
-      # Git履歴を完全に取得
+      # Gitの完全な履歴を取得
       - name: Fetch git history
         run: git fetch --unshallow
         # デフォルトでは浅いクローン（最新1つの履歴のみ）を行うため、
@@ -85,9 +84,23 @@ jobs:
       - name: Display all errors
         run: |
           echo "PHPCS Errors:"
-          if [ -f phpcs.log ]; then cat phpcs.log; else echo "No PHPCS errors"; fi
+          if [ -f phpcs.log ]; then
+            cat phpcs.log
+            ERROR=1
+          else
+            echo "No PHPCS errors"
+          fi
+          
           echo ""
           echo "ESLint Errors:"
-          if [ -f eslint.log ]; then cat eslint.log; else echo "No ESLint errors"; fi
-        # それぞれのログファイルを確認して、エラー内容を出力
-        # エラーがなければ「No errors」と表示
+          if [ -f eslint.log ]; then
+            cat eslint.log
+            ERROR=1
+          else
+            echo "No ESLint errors"
+          fi
+          
+          # エラーが存在する場合、終了コードを1に設定
+          if [ "$ERROR" = "1" ]; then
+            exit 1
+          fi
