@@ -18,14 +18,9 @@ jobs:
         # デフォルトでは浅いクローン（最新1つの履歴のみ）を行うため、
         # 差分を正確に取得するために完全な履歴をフェッチする
 
-      # Composer キャッシュ
-      - name: Cache Composer dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
+      # 環境変数として現在の年月を設定
+      - name: Set cache month
+        run: echo "CACHE_MONTH=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       # PHP環境のセットアップ
       - name: Set up PHP
@@ -39,14 +34,18 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-progress --no-suggest
 
-      # Composerキャッシュを保存
+      # Composer キャッシュパスの確認と作成
+      - name: Ensure Composer cache directory exists
+        run: mkdir -p ~/.composer/cache
+
+      # Composerキャッシュ
       - name: Cache Composer dependencies
         uses: actions/cache@v3
         with:
           path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
           restore-keys: |
-            ${{ runner.os }}-composer-
+            ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
 
       # 変更されたPHPファイルを取得
       - name: Get Changed PHP Files
@@ -73,19 +72,18 @@ jobs:
           node-version: '18' # Node.jsのバージョンを指定
         # Node.js環境をセットアップして、npm（Node.jsパッケージ管理ツール）を利用可能にする
 
-      # npm キャッシュ
-      - name: Install Node.js dependencies
-        run: npm ci
+      # npm キャッシュパスの確認と作成
+      - name: Ensure npm cache directory exists
+        run: mkdir -p ~/.npm
 
+      # npm キャッシュ
       - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ env.CACHE_MONTH }}
           restore-keys: |
-            ${{ runner.os }}-node-
-            ${{ runner.os }}-
-            node-
+            ${{ runner.os }}-node-${{ env.CACHE_MONTH }}
 
       # JavaScript依存関係をインストール
       - name: Install Node.js dependencies
