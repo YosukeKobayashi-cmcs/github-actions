@@ -1,7 +1,6 @@
 name: Code Check
 
 on:
-  push:  # プッシュ時にワークフローをトリガー
   pull_request:  # プルリクエスト作成・更新時にワークフローをトリガー
 
 jobs:
