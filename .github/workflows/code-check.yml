@@ -49,9 +49,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}-${{ format('yyyy-MM', now()) }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}-${{ env.CACHE_MONTH }}
           restore-keys: |
-            ${{ runner.os }}-composer-${{ format('yyyy-MM', now()) }}
+            ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
             ${{ runner.os }}-composer-
 
       # 変更されたPHPファイルを取得
