@@ -4,4 +4,4 @@ function sayHello(name) {
 }
 
 // 実行
-console.log(sayHello("GitHub Actionsxx));
+console.log(sayHello("GitHub Actionsx));
