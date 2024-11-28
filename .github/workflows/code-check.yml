@@ -27,11 +27,12 @@ jobs:
         id: changed-php
         run: |
           git fetch --depth=2 origin
-          git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.php$' || echo ""
+          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.php$' || echo "")
+          echo "files=$RESULT" >> $GITHUB_ENV
       - name: Run PHPCS
-        if: steps.changed-php.outputs.files != ''
+        if: env.files != ''
         run: |
-          echo "${{ steps.changed-php.outputs.files }}" | tr '\n' ' ' | xargs ./vendor/bin/phpcs --standard=PSR12
+          echo "$files" | tr '\n' ' ' | xargs ./vendor/bin/phpcs --standard=PSR12
 
       # JavaScriptコードチェック
       - name: Set up Node.js
@@ -44,10 +45,9 @@ jobs:
         id: changed-js
         run: |
           git fetch --depth=2 origin
-          git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.js$' || echo ""
-        outputs:
-          files: ${{ steps.changed-js.outputs.files }}
+          RESULT=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.js$' || echo "")
+          echo "files=$RESULT" >> $GITHUB_ENV
       - name: Run ESLint
-        if: steps.changed-js.outputs.files != ''
+        if: env.files != ''
         run: |
-          echo "${{ steps.changed-js.outputs.files }}" | tr '\n' ' ' | xargs npx eslint
+          echo "$files" | tr '\n' ' ' | xargs npx eslint
