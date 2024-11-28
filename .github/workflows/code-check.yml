@@ -1,8 +1,10 @@
 name: Code Check
 
 on:
-  pull_request: # 全てのブランチを対象にする
-  push: # プッシュ時もトリガー
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   code-check:
@@ -17,31 +19,35 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1' # 必要なPHPバージョンを指定
+          php-version: '8.1'
           tools: composer
       - name: Install PHP dependencies
         run: composer install
       - name: Get Changed PHP Files
         id: changed-php
         run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.php$' || echo ""
+          git fetch --depth=2 origin
+          git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.php$' || echo ""
       - name: Run PHPCS
         if: steps.changed-php.outputs.files != ''
         run: |
-          echo "${{ steps.changed-php.outputs.files }}" | xargs ./vendor/bin/phpcs --standard=PSR12
+          echo "${{ steps.changed-php.outputs.files }}" | tr '\n' ' ' | xargs ./vendor/bin/phpcs --standard=PSR12
 
       # JavaScriptコードチェック
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # 必要なNode.jsバージョンを指定
+          node-version: '18'
       - name: Install Node.js dependencies
         run: npm install
       - name: Get Changed JS Files
         id: changed-js
         run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.js$' || echo ""
+          git fetch --depth=2 origin
+          git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.js$' || echo ""
+        outputs:
+          files: ${{ steps.changed-js.outputs.files }}
       - name: Run ESLint
         if: steps.changed-js.outputs.files != ''
         run: |
-          echo "${{ steps.changed-js.outputs.files }}" | xargs npx eslint
+          echo "${{ steps.changed-js.outputs.files }}" | tr '\n' ' ' | xargs npx eslint
