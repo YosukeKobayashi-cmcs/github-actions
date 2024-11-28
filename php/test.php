@@ -6,4 +6,4 @@ function sayHello($name) {
 }
 
 // 実行
-echo sayHello("GitHub Actionsxzz);
+echo sayHello("GitHub Actions");
