@@ -18,10 +18,6 @@ jobs:
         # デフォルトでは浅いクローン（最新1つの履歴のみ）を行うため、
         # 差分を正確に取得するために完全な履歴をフェッチする
 
-      # 環境変数として現在の年月を設定
-      - name: Set cache month
-        run: echo "CACHE_MONTH=$(date +'%Y-%m')" >> $GITHUB_ENV
-
       # PHP環境のセットアップ
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -43,9 +39,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
+            ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
 
       # 変更されたPHPファイルを取得
       - name: Get Changed PHP Files
@@ -81,9 +77,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ env.CACHE_MONTH }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-${{ env.CACHE_MONTH }}
+            ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
       # JavaScript依存関係をインストール
       - name: Install Node.js dependencies
