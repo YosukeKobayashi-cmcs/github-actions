@@ -34,6 +34,10 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-progress --no-suggest
 
+      # Composer キャッシュパスの確認と作成
+      - name: Ensure Composer cache directory exists
+        run: mkdir -p ~/.composer/cache
+
       # Composerキャッシュ
       - name: Cache Composer dependencies
         uses: actions/cache@v3
@@ -68,6 +72,10 @@ jobs:
         with:
           node-version: '18' # Node.jsのバージョンを指定
         # Node.js環境をセットアップして、npm（Node.jsパッケージ管理ツール）を利用可能にする
+
+      # npm キャッシュパスの確認と作成
+      - name: Ensure npm cache directory exists
+        run: mkdir -p ~/.npm
 
       # npm キャッシュ
       - name: Cache npm dependencies
