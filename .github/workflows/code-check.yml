@@ -49,7 +49,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}-${{ env.CACHE_MONTH }}
+          key: ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
           restore-keys: |
             ${{ runner.os }}-composer-${{ env.CACHE_MONTH }}
             ${{ runner.os }}-composer-
@@ -84,7 +84,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}-${{ env.CACHE_MONTH }}
+          key: ${{ runner.os }}-node-${{ env.CACHE_MONTH }}
           restore-keys: |
             ${{ runner.os }}-node-${{ env.CACHE_MONTH }}
             ${{ runner.os }}-node-
