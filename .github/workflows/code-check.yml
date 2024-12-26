@@ -22,7 +22,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1' # PHPバージョンを指定
+          php-version: '7.4' # PHPバージョンを指定
           tools: composer    # composerをインストール
         # PHP環境をセットアップして、Composer（PHPパッケージ管理ツール）を利用可能にする
 
